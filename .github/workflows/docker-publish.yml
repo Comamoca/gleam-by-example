@@ -27,15 +27,14 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Adjutment docker volumes
-        run: |
-          docker system df
-          docker system prune -a --volumes -f
-          docker system df
-
+      - name: Free Disk Space (Ubuntu)
+        uses: jlumbroso/free-disk-space@main
+        with:
+          tool-cache: true
+  
       - name: Install Nix
         uses: DeterminateSystems/nix-installer-action@main
-
+  
       - name: Setup Magic Nix Cache
         uses: DeterminateSystems/magic-nix-cache-action@main
 
