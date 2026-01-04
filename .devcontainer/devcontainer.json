@@ -1,16 +1,21 @@
 {
-  "name": "devcontainer Gelam",
-  "image": "ghcr.io/comamoca/gleam/gleam:latest",
+  "$schema": "https://raw.githubusercontent.com/devcontainers/spec/main/schemas/devContainer.schema.json",
+  "name": "Gleam Development",
+  "image": "ghcr.io/comamoca/gleam-by-example:latest",
+  "overrideCommand": false,
+  "features": {},
   "customizations": {
     "vscode": {
       "settings": {
-        "editor.renderWhitespace": "all"
-      }
-    },
-    "extensions": [
-      "ms-vscode-remote.remote-containers",
-      "gleam.gleam",
-      "formulahendry.code-runner"
-    ]
-  }
+        "editor.renderWhitespace": "all",
+        "editor.formatOnSave": true
+      },
+      "extensions": [
+        // "ghcr.io/comamoca/gleam-by-example:latest",
+        "formulahendry.code-runner"
+      ]
+    }
+  },
+  "forwardPorts": [],
+  "postCreateCommand": "gleam --version"
 }
