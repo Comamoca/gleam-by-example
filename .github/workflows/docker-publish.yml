@@ -27,6 +27,12 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Adjutment docker volumes
+        run: |
+          docker system df
+          docker system prune -a --volumes -f
+          docker system df
+
       - name: Install Nix
         uses: DeterminateSystems/nix-installer-action@main
 
