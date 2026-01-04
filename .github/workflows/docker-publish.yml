@@ -43,6 +43,8 @@ jobs:
         run: |
           set -e
           nix build .#dockerImage
+          nix-collect-garbage -d
+
           if [ ! -f result ]; then
             echo "Error: Nix build did not produce result"
             exit 1
