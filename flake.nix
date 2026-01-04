@@ -52,6 +52,7 @@
           use-only-nix = with pkgs; [
             nil
             gleam2nix
+            devcontainer
           ];
 
           devdeps-gleam = with pkgs; [
@@ -74,7 +75,12 @@
 
             copyToRoot = pkgs.buildEnv {
               name = "image-root";
-              paths = devdeps-gleam;
+              paths = devdeps-gleam ++ [
+                (pkgs.runCommand "bin-sh-link" {} ''
+                  mkdir -p $out/bin
+                  ln -s /usr/bin/dash $out/bin/sh
+                '')
+              ];
               pathsToLink = [ "/bin" ];
             };
             config = {
@@ -120,6 +126,7 @@
 
           devenv.shells.default = {
             packages = use-only-nix ++ devdeps-gleam;
+
             services.postgres = {
               enable = true;
               listen_addresses = "127.0.0.1";
