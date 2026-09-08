@@ -95,13 +95,18 @@ jobs:
           purge-last-accessed: P1DT12H
           purge-primary-key: never
 
-      # nix-quick-install-action runs Nix single-user without a sandbox, so
-      # dockerTools.pullImage's skopeo call runs directly as the runner user
-      # against the real /run. Since /run isn't writable by non-root, skopeo
-      # can't create /run/containers/<uid> for its auth.json and fails with
-      # "permission denied". Pre-create it so the build can proceed.
+      # /run/containers already exists on the runner, owned by root and not
+      # traversable by the runner user, so dockerTools.pullImage's skopeo
+      # call fails reading/writing its auth.json under
+      # /run/containers/<uid> with "permission denied". Open up the parent
+      # and give the runner user its own subdirectory.
+      # See: https://discourse.nixos.org/t/building-docker-image-in-github-actions-leads-to-skopeo-related-issues/40636
       - name: Prepare writable container auth directory
-        run: sudo install -d -m 0777 -o "$(id -u)" -g "$(id -g)" "/run/containers/$(id -u)"
+        run: |
+          sudo mkdir -p /run/containers
+          sudo chmod 755 /run/containers
+          sudo mkdir -p "/run/containers/$(id -u)"
+          sudo chown "$(id -u):$(id -g)" "/run/containers/$(id -u)"
 
       - name: Build Docker image with Nix
         run: |
