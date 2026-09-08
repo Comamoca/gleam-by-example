@@ -1,0 +1,22 @@
+{
+  "$schema": "https://raw.githubusercontent.com/devcontainers/spec/main/schemas/devContainer.schema.json",
+  "name": "Todo App (Gleam)",
+  "image": "ghcr.io/comamoca/gleam-by-example/todo_app:latest",
+  "overrideCommand": false,
+  "features": {},
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "editor.renderWhitespace": "all",
+        "editor.formatOnSave": true
+      },
+      "extensions": [
+        "formulahendry.code-runner"
+      ]
+    }
+  },
+  "forwardPorts": [],
+  // 初回ビルドは SQLite の NIF(sqlight/esqlite)を含むため数分かかる。
+  // コンテナ作成待ちの間に済ませておき、ワークショップ中の待ち時間を減らす。
+  "postCreateCommand": "just setup"
+}

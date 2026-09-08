@@ -1,0 +1,145 @@
+name: Build and Push Example Docker Images to GHCR
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*'
+    paths:
+      - '**/flake.nix'
+      - '**/flake.lock'
+      - '**/.devcontainer/**'
+      - '.github/workflows/examples-docker-publish.yml'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - '**/flake.nix'
+      - '**/flake.lock'
+      - '**/.devcontainer/**'
+      - '.github/workflows/examples-docker-publish.yml'
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+
+jobs:
+  discover:
+    runs-on: ubuntu-latest
+    outputs:
+      examples: ${{ steps.find.outputs.examples }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # サンプル例 = リポジトリ直下(root)以外にある、独自の flake.nix と
+      # .devcontainer/devcontainer.json を持つディレクトリ。
+      # todo_app のような新しい例を追加した場合もこの workflow を変更せずに
+      # 自動で検出・公開される。
+      - name: Find example directories
+        id: find
+        run: |
+          set -e
+          examples=$(find . -mindepth 2 -maxdepth 2 -type f -name flake.nix -not -path './.*/*' \
+            | sed 's|^\./||;s|/flake\.nix$||' \
+            | sort \
+            | while IFS= read -r dir; do
+                if [ -f "$dir/.devcontainer/devcontainer.json" ]; then
+                  printf '%s\n' "$dir"
+                fi
+              done \
+            | jq -R -s -c 'split("\n") | map(select(length > 0))')
+
+          echo "Discovered examples: $examples"
+          echo "examples=$examples" >> "$GITHUB_OUTPUT"
+
+  build-and-push:
+    needs: discover
+    if: needs.discover.outputs.examples != '[]'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+    strategy:
+      fail-fast: false
+      matrix:
+        example: ${{ fromJson(needs.discover.outputs.examples) }}
+
+    env:
+      IMAGE_NAME: ${{ github.repository }}/${{ matrix.example }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Free Disk Space (Ubuntu)
+        uses: jlumbroso/free-disk-space@main
+        with:
+          tool-cache: true
+
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@main
+
+      - name: Setup Magic Nix Cache
+        uses: DeterminateSystems/magic-nix-cache-action@main
+
+      - name: Build Docker image with Nix
+        run: |
+          set -e
+          nix build ./${{ matrix.example }}#dockerImage
+          nix-collect-garbage -d
+
+          if [ ! -f result ]; then
+            echo "Error: Nix build did not produce result"
+            exit 1
+          fi
+          docker load < result
+
+      - name: Log in to GitHub Container Registry
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Tag and push Docker image
+        if: github.event_name != 'pull_request'
+        run: |
+          set -e
+
+          # Get the image name from Nix build
+          BUILT_IMAGE=$(docker images --format "{{.Repository}}:{{.Tag}}" --filter "dangling=false" | head -n 1)
+
+          if [ -z "$BUILT_IMAGE" ]; then
+            echo "Error: No Docker image found"
+            exit 1
+          fi
+
+          echo "Built image: $BUILT_IMAGE"
+
+          # Tag and push for each metadata tag
+          echo "${{ steps.meta.outputs.tags }}" | while IFS= read -r tag; do
+            if [ -n "$tag" ]; then
+              echo "Tagging: $tag"
+              docker tag "$BUILT_IMAGE" "$tag"
+              echo "Pushing: $tag"
+              docker push "$tag"
+            fi
+          done
