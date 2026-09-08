@@ -80,7 +80,7 @@
           devShellImage = pkgs.dockerTools.buildImage {
             name = "devShellImage";
             fromImage = pkgs.dockerTools.pullImage {
-              imageName = "";
+              imageName = "debian";
               imageDigest = "sha256:96e378d7e6531ac9a15ad505478fcc2e69f371b10f5cdf87857c4b8188404716";
               hash = "sha256-REn1qvbn3hcNqdZsovUAkC+OuLFwglqp/WwPWMhiX6s=";
               finalImageName = "debian";
