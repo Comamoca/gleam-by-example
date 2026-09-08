@@ -62,6 +62,7 @@ jobs:
       contents: read
       packages: write
       id-token: write
+      actions: write
     strategy:
       fail-fast: false
       matrix:
@@ -80,10 +81,19 @@ jobs:
           tool-cache: true
 
       - name: Install Nix
-        uses: DeterminateSystems/nix-installer-action@main
+        uses: nixbuild/nix-quick-install-action@v35
 
-      - name: Setup Magic Nix Cache
-        uses: DeterminateSystems/magic-nix-cache-action@main
+      - name: Restore and save Nix store
+        uses: nix-community/cache-nix-action@v7
+        with:
+          primary-key: nix-${{ runner.os }}-${{ matrix.example }}-${{ hashFiles(format('{0}/flake.nix', matrix.example), format('{0}/flake.lock', matrix.example)) }}
+          restore-prefixes-first-match: nix-${{ runner.os }}-${{ matrix.example }}-
+          gc-max-store-size-linux: 1G
+          purge: true
+          purge-prefixes: nix-${{ runner.os }}-${{ matrix.example }}-
+          purge-created: 0
+          purge-last-accessed: P1DT12H
+          purge-primary-key: never
 
       - name: Build Docker image with Nix
         run: |
