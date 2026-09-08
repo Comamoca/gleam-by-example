@@ -50,6 +50,10 @@
             src = pkgs.lib.cleanSource ./.;
             gleamNix = import ./gleam.nix { inherit (pkgs) lib; };
             gleam = pkgs.gleam.bin.latest;
+            # buildGleamApplication's `erlang` arg defaults to the
+            # top-level `pkgs.erlang` alias, which nixpkgs has deprecated
+            # in favor of the beamPackages sets.
+            erlang = pkgs.beamMinimal28Packages.erlang;
           };
 
           erlangPackages = with pkgs.beamMinimal28Packages; [
