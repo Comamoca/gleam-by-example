@@ -1,0 +1,15 @@
+{
+  "version": "0.2.0",
+  // Gleam 用デバッグアダプタはまだ存在しないため、
+  // node-terminal(JS デバッグターミナル)でコマンドを実行するだけの設定にしている。
+  // Node プロセス以外はアタッチ対象にならないので、gleam run がそのまま走る。
+  "configurations": [
+    {
+      "name": "Run: gleam run",
+      "type": "node-terminal",
+      "request": "launch",
+      "command": "gleam run",
+      "cwd": "${workspaceFolder}"
+    }
+  ]
+}

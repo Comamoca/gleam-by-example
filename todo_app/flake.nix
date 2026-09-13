@@ -162,6 +162,7 @@
             packages = with pkgs; [
 	      nixd 
 	      just
+              devcontainer
 
 	      atlas
 	      sqlite
@@ -169,7 +170,7 @@
             ] ++ erlangPackages
             ++ gleamPackages ;
 
-	    ESQLITE_USE_SYSTEM=1;
+	    ESQLITE_USE_SYSTEM = "1";
           };
 
 	  packages.default = app;

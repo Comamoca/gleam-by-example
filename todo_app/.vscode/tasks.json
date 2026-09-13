@@ -1,0 +1,19 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "gleam run",
+      "type": "shell",
+      "command": "gleam run",
+      "group": { "kind": "build", "isDefault": true },
+      "problemMatcher": [],
+      "presentation": { "clear": true, "reveal": "always" }
+    },
+    {
+      "label": "gleam test",
+      "type": "shell",
+      "command": "gleam test",
+      "problemMatcher": []
+    }
+  ]
+}

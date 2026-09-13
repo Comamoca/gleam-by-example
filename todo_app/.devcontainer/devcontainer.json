@@ -11,12 +11,10 @@
         "editor.formatOnSave": true
       },
       "extensions": [
-        "formulahendry.code-runner"
+        "formulahendry.code-runner",
+        "gleam.gleam"
       ]
     }
   },
-  "forwardPorts": [],
-  // 初回ビルドは SQLite の NIF(sqlight/esqlite)を含むため数分かかる。
-  // コンテナ作成待ちの間に済ませておき、ワークショップ中の待ち時間を減らす。
-  "postCreateCommand": "just setup"
+  "forwardPorts": [] 
 }

@@ -1,0 +1,34 @@
+db_file := "todo.sqlite3"
+db_url  := "sqlite://" + db_file
+dev_url := "sqlite://file?mode=memory&cache=shared"
+
+# First setup: download deps and build everything.
+# esqlite links against the system SQLite (ESQLITE_USE_SYSTEM=1, set in flake.nix),
+# so there is no slow vendored NIF compile even on the first run.
+setup:
+    gleam deps download
+    gleam build
+
+default:
+    @just --list
+
+# Generate Gleam code from db/schema.sql + db/query.sql
+codegen:
+    gleam run -m sqlode -- generate
+
+# Static check for schema/queries (no files written)
+verify:
+    gleam run -m sqlode -- verify
+
+# Apply db/schema.sql to the DB (interactive confirm)
+migrate:
+    atlas schema apply --url "{{db_url}}" --to "file://db/schema.sql" --dev-url "{{dev_url}}"
+
+# Show schema diff only (no changes applied)
+migrate-dry:
+    atlas schema apply --url "{{db_url}}" --to "file://db/schema.sql" --dev-url "{{dev_url}}" --dry-run
+
+# Start the devcontainer (if needed) and open a shell inside it
+shell:
+    devcontainer up --workspace-folder .
+    devcontainer exec --workspace-folder . bash
