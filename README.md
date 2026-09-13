@@ -1,4 +1,4 @@
-# beginners_exsample
+# beginners_example
 
 入門Gleamのサンプルリポジトリです。
 
